@@ -13,7 +13,7 @@ fun NavGraph(
 ) {
     NavHost(navController = navController, startDestination = Routes.HomeScreen.route) {
         composable(route = Routes.HomeScreen.route) {
-            HomeScreen(navController)
+            HomeScreen()
         }
 
     }

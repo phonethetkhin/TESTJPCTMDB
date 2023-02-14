@@ -20,4 +20,8 @@ class HomeViewModel @Inject constructor(
     fun onSearchValueChange(newValue: String) {
         _uiStates.update { it.copy(searchFieldValue = newValue) }
     }
+
+    fun togglePageChanged(index: Int) {
+        _uiStates.update { it.copy(currentPage = index) }
+    }
 }
