@@ -1,15 +1,14 @@
 package com.ptk.testjpctmdb.ui.screen
 
-import androidx.compose.foundation.Image
+import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -17,6 +16,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -27,11 +27,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.ptk.testjpctmdb.R
+import com.ptk.testjpctmdb.data.dto.MovieModel
 import com.ptk.testjpctmdb.ui.ui_resource.composables.*
 import com.ptk.testjpctmdb.ui.ui_state.HomeUIStates
 import com.ptk.testjpctmdb.viewmodel.HomeViewModel
@@ -58,55 +61,65 @@ fun HomeScreenBody(
     onSearchValueChanged: (String) -> Unit,
     homeViewModel: HomeViewModel,
 ) {
-    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-        Text(
-            modifier = modifier.padding(start = 16.dp, top = 16.dp),
-            text = "What are you looking for?",
-            fontSize = 20.sp,
-            color = Color.Black,
-            fontWeight = FontWeight.Bold
-        )
 
-        Row(
-            verticalAlignment = Alignment.Top,
-            modifier = modifier.padding(top = 16.dp)
-        ) {
-            SearchView()
-            IconButton(
-                onClick = {},
+    LaunchedEffect("") {
+        homeViewModel.getPopularMovie()
+        homeViewModel.getUpcomingMovie()
+    }
+    Log.d("helloWorld", "${uiStates.recommendedMovies}")
+    val recommendedList = uiStates.recommendedMovies
+    val upcomingList = uiStates.upcomingMovies
+    LazyColumn(Modifier.padding(16.dp)) {
+        item {
+            Text(
+                modifier = modifier.padding(top = 16.dp),
+                text = "What are you looking for?",
+                fontSize = 20.sp,
+                color = Color.Black,
+                fontWeight = FontWeight.Bold
+            )
+            Row(
+                verticalAlignment = Alignment.Top,
+                modifier = modifier.padding(top = 16.dp)
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.filter_svgrepo),
-                    tint = Color.White,
-                    contentDescription = "filter_button",
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .height(35.dp)
-                        .width(35.dp)
-                        .background(
-                            color = colorResource(id = R.color.blue),
-                        )
-                        .padding(4.dp)
+                SearchView()
+                IconButton(
+                    onClick = {},
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.filter_svgrepo),
+                        tint = Color.White,
+                        contentDescription = "filter_button",
+                        modifier = Modifier
+                            .height(35.dp)
+                            .width(35.dp)
+                            .background(
+                                color = colorResource(id = R.color.blue),
+                            )
+                            .padding(4.dp)
 
 
-                )
+                    )
+                }
             }
+            TitleList(uiStates, homeViewModel = homeViewModel)
+            Text(
+                text = "Recommended",
+                fontSize = 22.sp,
+                color = Color.DarkGray,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+
+            RecommendedList(recommendedList ?: arrayListOf(), homeViewModel)
+            Text(
+                text = "Upcoming Movies",
+                fontSize = 22.sp,
+                color = Color.DarkGray,
+                modifier = Modifier.padding(top = 16.dp)
+            )
         }
-        TitleList(uiStates, homeViewModel = homeViewModel)
-        Text(
-            text = "Recommended",
-            fontSize = 22.sp,
-            color = Color.DarkGray,
-            modifier = Modifier.padding(top = 16.dp, start = 16.dp)
-        )
-        RecommendedList()
-        Text(
-            text = "Upcoming Movies",
-            fontSize = 22.sp,
-            color = Color.DarkGray,
-            modifier = Modifier.padding(top = 16.dp, start = 16.dp)
-        )
-        UpcomingList()
+        this@LazyColumn.upcomingList(upcomingList ?: arrayListOf(), homeViewModel)
+
     }
 }
 
@@ -115,7 +128,7 @@ fun RowScope.SearchView() {
     Card(
         modifier = Modifier
             .weight(1F)
-            .padding(start = 16.dp, end = 8.dp, top = 5.dp),
+            .padding(end = 8.dp, top = 5.dp),
         elevation = 8.dp
 
     ) {
@@ -153,6 +166,7 @@ fun TitleList(uiStates: HomeUIStates, homeViewModel: HomeViewModel) {
     }
 }
 
+
 @Composable
 fun Tabs(tabs: List<TabItem>, currentPage: Int, homeViewModel: HomeViewModel) {
 
@@ -160,7 +174,6 @@ fun Tabs(tabs: List<TabItem>, currentPage: Int, homeViewModel: HomeViewModel) {
         selectedTabIndex = currentPage,
         backgroundColor = Color.White,
         edgePadding = 0.dp,
-        modifier = Modifier.padding(start = 8.dp, end = 8.dp),
         indicator = { tabPositions ->
             Box(
                 modifier = Modifier
@@ -181,7 +194,7 @@ fun Tabs(tabs: List<TabItem>, currentPage: Int, homeViewModel: HomeViewModel) {
                 onClick = {
                     homeViewModel.togglePageChanged(index)
                 },
-                text = { Text(tabItem.title, fontSize = 14.sp) },
+                text = { Text(tabItem.title, fontSize = 16.sp) },
                 selectedContentColor = Color.Black,
                 unselectedContentColor = Color.Gray,
                 enabled = true
@@ -196,59 +209,58 @@ fun Tabs(tabs: List<TabItem>, currentPage: Int, homeViewModel: HomeViewModel) {
 }
 
 @Composable
-fun RecommendedList() {
-    val dummyList =
-        arrayListOf(
-            "SpiderMan",
-            "BatMan",
-            "AntMan",
-            "Wonder Woman",
-            "Flash",
-            "Spectre",
-            "Haunt",
-            "Conjuring"
-        )
-    LazyRow(Modifier.padding(start = 16.dp)) {
-        items(dummyList) { movie ->
-            RecommendedListItem(movie = movie)
+fun RecommendedList(recommendedList: List<MovieModel>, homeViewModel: HomeViewModel) {
+
+    LazyRow() {
+        items(recommendedList) { movie ->
+            RecommendedListItem(movie = movie, homeViewModel)
         }
     }
 }
 
 @Composable
-fun RecommendedListItem(movie: String) {
+fun RecommendedListItem(movie: MovieModel, homeViewModel: HomeViewModel) {
     Column(
         Modifier
             .padding(top = 8.dp, end = 8.dp)
-            .width(80.dp)
+            .width(120.dp)
     ) {
-        Image(
+        AsyncImage(
+            model = "https://image.tmdb.org/t/p/original${movie.posterPath}",
             modifier = Modifier
-                .width(80.dp)
-                .height(100.dp)
+                .width(120.dp)
+                .height(160.dp)
                 .clip(shape = RoundedCornerShape(8.dp)),
             contentScale = ContentScale.FillBounds,
-            painter = painterResource(id = R.drawable.spd),
+            placeholder = painterResource(id = R.drawable.placeholder),
             contentDescription = "photo"
         )
         Text(
             modifier = Modifier
                 .defaultMinSize(minHeight = 50.dp)
                 .padding(top = 8.dp),
-            text = movie,
+            textAlign = TextAlign.Center,
+            text = movie.title ?: "",
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             fontSize = 14.sp,
             color = Color.Black,
         )
+        Log.d("movieIsFav", movie.isFav.toString())
         Row {
             Icon(
-                painter = painterResource(id = R.drawable.baseline_favorite_24),
-                "Favorite Icon"
-            )
+                modifier = Modifier.clickable {
+                    homeViewModel.toggleFav(false, movie)
+                },
+                painter = painterResource(R.drawable.baseline_favorite_24),
+                tint = if (movie.isFav) Color.Red else Color.Black,
+                contentDescription = "Favorite Icon",
+
+                )
             Text(
-                text = "8.2 %",
+                text = "${movie.voteAverage ?: 0}%",
                 fontSize = 14.sp,
+                modifier = Modifier.padding(start = 8.dp),
                 color = Color.Black,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
@@ -258,88 +270,95 @@ fun RecommendedListItem(movie: String) {
     }
 }
 
-@Composable
-fun UpcomingList() {
-    val dummyList =
-        arrayListOf(
-            "SpiderMan",
-            "BatMan",
-            "AntMan",
-            "Wonder Woman",
-            "Flash",
-            "Spectre",
-            "Haunt",
-            "Conjuring"
-        )
-    LazyRow(Modifier.padding(start = 16.dp)) {
-        items(dummyList) { movie ->
-            UpcomingListItem(movieName = movie, desc = "Blah BLah Blah BLah Blah BLah Blah Blah")
-        }
+fun LazyListScope.upcomingList(upcomingList: List<MovieModel>, homeViewModel: HomeViewModel) {
+    items(upcomingList) { movie ->
+        UpcomingListItem(movie, homeViewModel)
     }
 }
 
 @Composable
-fun UpcomingListItem(movieName: String, desc: String) {
+fun UpcomingListItem(movie: MovieModel, homeViewModel: HomeViewModel) {
     Row(
         Modifier
             .padding(top = 8.dp, end = 8.dp)
-            .width(80.dp)
+            .fillMaxWidth()
+            .height(160.dp)
     ) {
-        Image(
+        AsyncImage(
+            model = "https://image.tmdb.org/t/p/original${movie.posterPath}",
             modifier = Modifier
-                .width(80.dp)
-                .height(100.dp)
+                .width(120.dp)
+                .height(160.dp)
                 .clip(shape = RoundedCornerShape(8.dp)),
             contentScale = ContentScale.FillBounds,
-            painter = painterResource(id = R.drawable.spd),
+            placeholder = painterResource(id = R.drawable.placeholder),
             contentDescription = "photo"
         )
-
-        Column(modifier = Modifier.padding(top = 8.dp)) {
-            Text(
-                modifier = Modifier
-                    .padding(top = 8.dp),
-                text = movieName,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                fontSize = 14.sp,
-                color = Color.Black,
-            )
-            Text(
-                modifier = Modifier
-                    .padding(top = 8.dp),
-                text = desc,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                fontSize = 14.sp,
-                color = Color.Black,
-            )
-            Row {
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_favorite_24),
-                    "Favorite Icon"
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(start = 8.dp, end = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier.weight(1F)
+            ) {
+                Text(
+                    fontWeight = FontWeight.Bold,
+                    text = movie.title ?: "",
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    fontSize = 20.sp,
+                    color = Color.Black,
                 )
                 Text(
-                    text = "8.2 %",
+                    modifier = Modifier
+                        .padding(top = 8.dp),
+                    text = movie.overview ?: "",
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    painter = painterResource(id = if (movie.isFav) R.drawable.baseline_favorite_24_red else R.drawable.baseline_favorite_24),
+                    contentDescription = "Favorite Icon",
+                    modifier = Modifier.clickable {
+                        homeViewModel.toggleFav(false, movie)
+                    }
+                )
+                Text(
+                    text = "${movie.voteAverage ?: 0}%",
+                    modifier = Modifier.padding(start = 8.dp),
                     fontSize = 14.sp,
                     color = Color.Black,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
                 Icon(
-                    painter = painterResource(id = R.drawable.baseline_favorite_24),
-                    "Favorite Icon"
-                )
+
+                    painter = painterResource(id = R.drawable.baseline_chat_bubble_24),
+                    contentDescription = "Favorite Icon",
+                    tint = Color.Yellow,
+                    modifier = Modifier.padding(start = 16.dp),
+
+                    )
                 Text(
-                    text = "8.2 %",
+                    text = "${movie.popularity ?: 0}",
+                    modifier = Modifier.padding(start = 8.dp),
                     fontSize = 14.sp,
                     color = Color.Black,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
-        }
 
+
+        }
     }
 }
 
