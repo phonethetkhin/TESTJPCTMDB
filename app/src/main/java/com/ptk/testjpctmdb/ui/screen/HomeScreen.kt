@@ -32,10 +32,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.ptk.testjpctmdb.R
 import com.ptk.testjpctmdb.data.dto.MovieModel
 import com.ptk.testjpctmdb.ui.ui_resource.composables.*
+import com.ptk.testjpctmdb.ui.ui_resource.navigation.Routes
 import com.ptk.testjpctmdb.ui.ui_state.HomeUIStates
 import com.ptk.testjpctmdb.viewmodel.HomeViewModel
 
@@ -43,6 +45,7 @@ import com.ptk.testjpctmdb.viewmodel.HomeViewModel
 fun HomeScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
+    navController: NavController,
 ) {
     val uiStates by homeViewModel.uiStates.collectAsState()
 
@@ -50,7 +53,8 @@ fun HomeScreen(
         modifier,
         uiStates,
         homeViewModel::onSearchValueChange,
-        homeViewModel = homeViewModel
+        homeViewModel = homeViewModel,
+        navController = navController
     )
 }
 
@@ -60,11 +64,14 @@ fun HomeScreenBody(
     uiStates: HomeUIStates,
     onSearchValueChanged: (String) -> Unit,
     homeViewModel: HomeViewModel,
+    navController: NavController,
 ) {
 
     LaunchedEffect("") {
-        homeViewModel.getPopularMovie()
-        homeViewModel.getUpcomingMovie()
+        if (uiStates.recommendedMovies.isNullOrEmpty()) {
+            homeViewModel.getPopularMovie()
+            homeViewModel.getUpcomingMovie()
+        }
     }
     Log.d("helloWorld", "${uiStates.recommendedMovies}")
     val recommendedList = uiStates.recommendedMovies
@@ -110,7 +117,7 @@ fun HomeScreenBody(
                 modifier = Modifier.padding(top = 16.dp)
             )
 
-            RecommendedList(recommendedList ?: arrayListOf(), homeViewModel)
+            RecommendedList(recommendedList ?: arrayListOf(), homeViewModel, navController)
             Text(
                 text = "Upcoming Movies",
                 fontSize = 22.sp,
@@ -118,7 +125,7 @@ fun HomeScreenBody(
                 modifier = Modifier.padding(top = 16.dp)
             )
         }
-        this@LazyColumn.upcomingList(upcomingList ?: arrayListOf(), homeViewModel)
+        this@LazyColumn.upcomingList(upcomingList ?: arrayListOf(), homeViewModel, navController)
 
     }
 }
@@ -209,21 +216,32 @@ fun Tabs(tabs: List<TabItem>, currentPage: Int, homeViewModel: HomeViewModel) {
 }
 
 @Composable
-fun RecommendedList(recommendedList: List<MovieModel>, homeViewModel: HomeViewModel) {
+fun RecommendedList(
+    recommendedList: List<MovieModel>,
+    homeViewModel: HomeViewModel,
+    navController: NavController
+) {
 
     LazyRow() {
         items(recommendedList) { movie ->
-            RecommendedListItem(movie = movie, homeViewModel)
+            RecommendedListItem(movie = movie, homeViewModel, navController)
         }
     }
 }
 
 @Composable
-fun RecommendedListItem(movie: MovieModel, homeViewModel: HomeViewModel) {
+fun RecommendedListItem(
+    movie: MovieModel,
+    homeViewModel: HomeViewModel,
+    navController: NavController
+) {
     Column(
         Modifier
             .padding(top = 8.dp, end = 8.dp)
             .width(120.dp)
+            .clickable {
+                navController.navigate(Routes.DetailScreen.route + "?isFav=${movie.isFav}&movieId=${movie.id}")
+            }
     ) {
         AsyncImage(
             model = "https://image.tmdb.org/t/p/original${movie.posterPath}",
@@ -270,7 +288,11 @@ fun RecommendedListItem(movie: MovieModel, homeViewModel: HomeViewModel) {
     }
 }
 
-fun LazyListScope.upcomingList(upcomingList: List<MovieModel>, homeViewModel: HomeViewModel) {
+fun LazyListScope.upcomingList(
+    upcomingList: List<MovieModel>,
+    homeViewModel: HomeViewModel,
+    navController: NavController
+) {
     items(upcomingList) { movie ->
         UpcomingListItem(movie, homeViewModel)
     }
@@ -324,11 +346,13 @@ fun UpcomingListItem(movie: MovieModel, homeViewModel: HomeViewModel) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                Log.d("testFav", movie.isFav.toString())
                 Icon(
-                    painter = painterResource(id = if (movie.isFav) R.drawable.baseline_favorite_24_red else R.drawable.baseline_favorite_24),
+                    painter = painterResource(id = R.drawable.baseline_favorite_24),
+                    tint = if (movie.isFav) Color.Red else Color.Black,
                     contentDescription = "Favorite Icon",
                     modifier = Modifier.clickable {
-                        homeViewModel.toggleFav(false, movie)
+                        homeViewModel.toggleFav(true, movie)
                     }
                 )
                 Text(

@@ -57,5 +57,26 @@ class HomeRepository @Inject constructor(
             }
         }
     }
+    fun getMovieDetail(movieId:Int) = channelFlow {
+        send(RemoteResource.Loading)
+        try {
+            val response =
+                apiService.getDetail(movieId)
+            send(RemoteResource.Success(response))
+        } catch (e: Exception) {
+            when (e) {
+                is HttpRequestTimeoutException -> {
+                    send(RemoteResource.Failure(errorMessage = application.getString(R.string.connection_error_message)))
+                }
+                is ConnectTimeoutException -> {
+                    send(RemoteResource.Failure(errorMessage = application.getString(R.string.connection_error_message)))
+                }
+                else -> {
+                    val errorMessage = "Something went wrong: ${e.localizedMessage}"
+                    send(RemoteResource.Failure(errorMessage = errorMessage))
+                }
+            }
+        }
+    }
 
 }

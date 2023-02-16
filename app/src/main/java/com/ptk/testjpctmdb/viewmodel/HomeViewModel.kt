@@ -29,6 +29,22 @@ class HomeViewModel @Inject constructor(
         _uiStates.update { it.copy(currentPage = index) }
     }
 
+    fun setIsFav(isFav: Boolean) {
+        Log.d("testFavasdfasd2", isFav.toString())
+
+        _uiStates.update {
+            _uiStates.value.movieDetail?.isFav = isFav
+            Log.d("testFavasdfasd3", "${_uiStates.value.movieDetail}")
+
+            val movieDetail = _uiStates.value.movieDetail?.copy()
+            Log.d("testFavasdfasd4", "$movieDetail")
+
+            it.copy(
+                movieDetail = movieDetail
+            )
+        }
+    }
+
     fun toggleFav(isUpcoming: Boolean, movieModel: MovieModel) {
         if (isUpcoming) {
             _uiStates.update {
@@ -101,6 +117,39 @@ class HomeViewModel @Inject constructor(
                         it.copy(
                             showLoadingDialog = false,
                             upcomingMovies = remoteResource.data.results,
+                        )
+                    }
+                }
+                is RemoteResource.Failure -> {
+                    Log.e("failure", "failure")
+
+                    _uiStates.update {
+                        it.copy(
+                            showLoadingDialog = false,
+                        )
+                    }
+                    application.showToast(remoteResource.errorMessage.toString())
+                }
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    fun getMovieDetail(movieId: Int) {
+        repository.getMovieDetail(movieId = movieId).onEach { remoteResource ->
+            when (remoteResource) {
+                is RemoteResource.Loading -> {
+                    Log.e("success", "loading")
+                    _uiStates.update {
+                        it.copy(showLoadingDialog = true)
+                    }
+                }
+                is RemoteResource.Success -> {
+                    Log.e("success", "success")
+
+                    _uiStates.update {
+                        it.copy(
+                            showLoadingDialog = false,
+                            movieDetail = remoteResource.data,
                         )
                     }
                 }
