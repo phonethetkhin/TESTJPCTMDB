@@ -1,5 +1,6 @@
 package com.ptk.testjpctmdb.data.network
 
+import com.ptk.testjpctmdb.data.dto.CastResponseModel
 import com.ptk.testjpctmdb.data.dto.MovieDetailResponseModel
 import com.ptk.testjpctmdb.data.dto.MovieResponseModel
 import com.ptk.testjpctmdb.util.API_KEY
@@ -30,6 +31,12 @@ class ApiServiceImpl @Inject constructor(
 
     override suspend fun getDetail(movieId: Int): MovieDetailResponseModel = client.get {
         url(BASE_URL + "movie/${movieId}")
+        contentType(ContentType.Application.Json)
+        parameter("api_key", API_KEY)
+    }
+
+    override suspend fun getCast(movieId: Int): CastResponseModel = client.get {
+        url(BASE_URL + "movie/${movieId}/credits")
         contentType(ContentType.Application.Json)
         parameter("api_key", API_KEY)
     }

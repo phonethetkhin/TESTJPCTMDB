@@ -268,7 +268,7 @@ fun RecommendedListItem(
         Row {
             Icon(
                 modifier = Modifier.clickable {
-                    homeViewModel.toggleFav(false, movie)
+//                    homeViewModel.toggleFav(false, movie)
                 },
                 painter = painterResource(R.drawable.baseline_favorite_24),
                 tint = if (movie.isFav) Color.Red else Color.Black,
@@ -352,7 +352,7 @@ fun UpcomingListItem(movie: MovieModel, homeViewModel: HomeViewModel) {
                     tint = if (movie.isFav) Color.Red else Color.Black,
                     contentDescription = "Favorite Icon",
                     modifier = Modifier.clickable {
-                        homeViewModel.toggleFav(true, movie)
+//                        homeViewModel.toggleFav(true, movie)
                     }
                 )
                 Text(

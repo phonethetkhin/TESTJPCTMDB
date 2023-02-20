@@ -29,6 +29,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.ptk.testjpctmdb.R
+import com.ptk.testjpctmdb.data.dto.CastItem
 import com.ptk.testjpctmdb.ui.ui_resource.theme.Blue
 import com.ptk.testjpctmdb.ui.ui_resource.theme.Pink
 import com.ptk.testjpctmdb.ui.ui_state.HomeUIStates
@@ -48,16 +49,21 @@ fun DetailScreen(
     Log.d("testFavasdfasd", isFav.toString())
     LaunchedEffect("") {
         homeViewModel.getMovieDetail(movieId = movieId)
+        homeViewModel.getCast(movieId = movieId)
 
     }
-    if(uiStates.movieDetail!=null) {
+    if (uiStates.movieDetail != null) {
         homeViewModel.setIsFav(isFav)
     }
-    DetailScreenBody(navController, uiStates)
+    DetailScreenBody(navController, uiStates, homeViewModel)
 }
 
 @Composable
-fun DetailScreenBody(navController: NavController, uiStates: HomeUIStates) {
+fun DetailScreenBody(
+    navController: NavController,
+    uiStates: HomeUIStates,
+    homeViewModel: HomeViewModel
+) {
     val movieDetail = uiStates.movieDetail
     Column(
         modifier = Modifier
@@ -105,6 +111,11 @@ fun DetailScreenBody(navController: NavController, uiStates: HomeUIStates) {
             Row() {
                 Log.d("favTest", movieDetail?.isFav.toString())
                 Icon(
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .clickable {
+//                            homeViewModel.toggleFav(movieDetail!!)
+                        },
                     painter = painterResource(id = R.drawable.baseline_favorite_24),
                     tint = if (movieDetail == null) {
                         Color.Black
@@ -116,7 +127,6 @@ fun DetailScreenBody(navController: NavController, uiStates: HomeUIStates) {
                         }
                     },
                     contentDescription = "Fav Icon",
-                    modifier = Modifier.padding(end = 8.dp)
                 )
                 Text("${movieDetail?.voteAverage ?: 0}%", fontSize = 16.sp, color = Color.Gray)
 
@@ -163,13 +173,13 @@ fun DetailScreenBody(navController: NavController, uiStates: HomeUIStates) {
                     textColor = Color.Black,
                     isViewAllRow = true
                 )
-                CastList()
+                CastList(uiStates)
             }
         }
         Button(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp, start = 16.dp, end = 16.dp),
+                .padding(top = 16.dp),
             onClick = { }, colors = ButtonDefaults.buttonColors(backgroundColor = Blue),
         ) {
             Text("Book Tickets", fontSize = 20.sp, color = Color.White)
@@ -211,24 +221,24 @@ fun TextRowItem(
 }
 
 @Composable
-fun CastList() {
-    val dummyList = arrayListOf("asdfa", "thomas", "john", "xavier", "Elizabeth")
+fun CastList(uiStates: HomeUIStates) {
+    val castList = uiStates.castModel?.cast ?: emptyList()
     LazyRow(modifier = Modifier.padding(top = 16.dp)) {
-        items(dummyList) { movie ->
-            CastListItem()
+        items(castList) { castItm ->
+            CastListItem(castItm!!)
         }
     }
 }
 
 @Composable
-fun CastListItem() {
+fun CastListItem(castItem: CastItem) {
     Column(
         Modifier
             .width(120.dp)
             .padding(end = 16.dp)
     ) {
         AsyncImage(
-            model = "https://image.tmdb.org/t/p/original/sv1xJUazXeYqALzczSZ3O6nkH75.jpg",
+            model = "https://image.tmdb.org/t/p/original/${castItem.profilePath}",
             contentDescription = "movie photo",
             modifier = Modifier
                 .width(120.dp)
@@ -237,7 +247,7 @@ fun CastListItem() {
             contentScale = ContentScale.FillBounds
         )
         Text(
-            text = "Stephanie Beatriz",
+            text = "${castItem.name}",
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,

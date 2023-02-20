@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ptk.testjpctmdb.data.RemoteResource
+import com.ptk.testjpctmdb.data.dto.MovieDetailResponseModel
 import com.ptk.testjpctmdb.data.dto.MovieModel
 import com.ptk.testjpctmdb.repository.HomeRepository
 import com.ptk.testjpctmdb.ui.ui_state.HomeUIStates
@@ -44,6 +45,7 @@ class HomeViewModel @Inject constructor(
             )
         }
     }
+/*
 
     fun toggleFav(isUpcoming: Boolean, movieModel: MovieModel) {
         if (isUpcoming) {
@@ -66,6 +68,39 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+    fun toggleFav(movieDetailResponseModel: MovieDetailResponseModel) {
+        _uiStates.update {
+            _uiStates.value.movieDetail?.isFav = true
+            Log.d("testFavasdfasd3", "${_uiStates.value.movieDetail}")
+
+            val movieDetail = _uiStates.value.movieDetail?.copy()
+            Log.d("testFavasdfasd4", "$movieDetail")
+
+            it.copy(
+                movieDetail = movieDetail
+            )
+        }
+       */
+/* _uiStates.update {
+            it.copy(upcomingMovies = _uiStates.value.upcomingMovies?.mapIndexed { index, details ->
+                if (_uiStates.value.upcomingMovies?.indexOf(_uiStates.value.upcomingMovies?.find { de -> de.id == movieDetailResponseModel.id }) == index) details.copy(
+                    isFav = !details.isFav
+                )
+                else details
+            } as ArrayList<MovieModel>)
+        }
+        _uiStates.update {
+            it.copy(recommendedMovies = _uiStates.value.recommendedMovies?.mapIndexed { index, details ->
+                if (_uiStates.value.recommendedMovies?.indexOf(_uiStates.value.recommendedMovies?.find { de -> de.id == movieDetailResponseModel.id }) == index) details.copy(
+                    isFav = !details.isFav
+                )
+                else details
+            } as ArrayList<MovieModel>)
+        }*//*
+
+    }
+*/
 
 
     fun getPopularMovie() {
@@ -166,5 +201,39 @@ class HomeViewModel @Inject constructor(
             }
         }.launchIn(viewModelScope)
     }
+
+    fun getCast(movieId: Int) {
+        repository.getCast(movieId = movieId).onEach { remoteResource ->
+            when (remoteResource) {
+                is RemoteResource.Loading -> {
+                    Log.e("success", "loading")
+                    _uiStates.update {
+                        it.copy(showLoadingDialog = true)
+                    }
+                }
+                is RemoteResource.Success -> {
+                    Log.e("success", "success")
+
+                    _uiStates.update {
+                        it.copy(
+                            showLoadingDialog = false,
+                            castModel = remoteResource.data,
+                        )
+                    }
+                }
+                is RemoteResource.Failure -> {
+                    Log.e("failure", "failure")
+
+                    _uiStates.update {
+                        it.copy(
+                            showLoadingDialog = false,
+                        )
+                    }
+                    application.showToast(remoteResource.errorMessage.toString())
+                }
+            }
+        }.launchIn(viewModelScope)
+    }
+
 
 }
